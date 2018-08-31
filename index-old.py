@@ -1,135 +1,100 @@
-import pandas as ps
-from tkinter import Tk, Label, Button
-import numpy as np
-import matplotlib.pyplot as plt
-
-import fftlib
-
-# class MyFirstGUI:
-#     def __init__(self, master):
-#         self.master = master
-#         master.title("A simple GUI")
-#
-#         self.label = Label(master, text="This is our first GUI!")
-#         self.label.pack()
-#
-#         self.greet_button = Button(master, text="Greet", command=self.greet)
-#         self.greet_button.pack()
-#
-#         self.close_button = Button(master, text="Close", command=master.quit)
-#         self.close_button.pack()
-#
-#     def greet():
-#         print("Greetings!")
-
-# root = Tk()
-# my_gui = MyFirstGUI(root)
-# root.mainloop()
-
-# ps = ps.read_excel('Мощность.xls', sheet_name="POVER")
-# data = ps['К408А'].values
-# N = data.size
-# measureTime = 3.0
-#
-# t = np.linspace(0, measureTime * N, N)
-#
-# plt.figure()
-# plt.plot(t, data)
-# plt.xlim(0, N)
-# plt.show()
-
 import sys
+import time
+
+import numpy as np
+
 from PyQt5.QtWidgets import QDialog, QApplication, QPushButton, QVBoxLayout, QToolTip, QMessageBox, QWidget, \
-    QDesktopWidget, QMainWindow
+    QDesktopWidget, QMainWindow, QAction, QFileDialog
 from PyQt5.QtGui import QIcon, QFont
 
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
-import matplotlib.pyplot as plt
+from matplotlib.backends.qt_compat import QtCore, QtWidgets, is_pyqt5
+# if is_pyqt5():
+from matplotlib.backends.backend_qt5agg import (
+    FigureCanvas, NavigationToolbar2QT as NavigationToolbar)
+# else:
+#     from matplotlib.backends.backend_qt4agg import (
+#         FigureCanvas, NavigationToolbar2QT as NavigationToolbar)
+from matplotlib.figure import Figure
 
-import random
 
+class ApplicationWindow(QtWidgets.QMainWindow):
+    def __init__(self):
+        super(ApplicationWindow, self).__init__()
+        self._main = QtWidgets.QWidget()
+        self.setCentralWidget(self._main)
+        layout = QtWidgets.QVBoxLayout(self._main)
 
-class Window(QMainWindow): # QDialog QWidget QMainWindow
-    def __init__(self, parent=None):
-        super(Window, self).__init__(parent)
+        static_canvas = FigureCanvas(Figure(figsize=(5, 3)))
+        layout.addWidget(static_canvas)
+        self.addToolBar(NavigationToolbar(static_canvas, self))
 
-        self.setWindowTitle('Icon')
-        self.setGeometry(300, 300, 300, 220)
-        self.setWindowIcon(QIcon('web.png'))
-        QToolTip.setFont(QFont('SansSerif', 10))
-        self.setToolTip('This is a <b>QWidget</b> widget')
-        self.center()
-        # a figure instance to plot on
-        self.figure = plt.figure()
+        dynamic_canvas = FigureCanvas(Figure(figsize=(5, 3)))
+        layout.addWidget(dynamic_canvas)
+        self.addToolBar(QtCore.Qt.BottomToolBarArea,
+                        NavigationToolbar(dynamic_canvas, self))
 
-        # this is the Canvas Widget that displays the `figure`
-        # it takes the `figure` instance as a parameter to __init__
-        self.canvas = FigureCanvas(self.figure)
+        self._static_ax = static_canvas.figure.subplots()
+        t = np.linspace(0, 10, 501)
+        self._static_ax.plot(t, np.tan(t), ".")
 
-        # this is the Navigation widget
-        # it takes the Canvas widget and a parent
-        self.toolbar = NavigationToolbar(self.canvas, self)
-
-        self.addToolBar(self.toolbar)
+        self._dynamic_ax = dynamic_canvas.figure.subplots()
+        self._timer = dynamic_canvas.new_timer(100, [(self._update_canvas, (), {})])
+        self._timer.start()
 
         self.statusBar().showMessage('Ready')
 
-        # Just some button connected to `plot` method
-        self.button = QPushButton('Plot')
-        self.button.setToolTip('This is a <b>QPushButton</b> widget')
+        exitAct = QAction(QIcon('Exit.png'), '&Exit', self)
+        exitAct.setShortcut('Ctrl+Q')
+        exitAct.setStatusTip('Exit application')
+        exitAct.triggered.connect(qapp.quit)
 
-        self.button.clicked.connect(self.plot)
+        menubar = self.menuBar()
+        fileMenu = menubar.addMenu('&File')
+        fileMenu.addAction(exitAct)
 
-        # set the layout
-        layout = QVBoxLayout()
-        layout.addWidget(self.toolbar)
-        layout.addWidget(self.canvas)
-        layout.addWidget(self.button)
-        self.setLayout(layout)
+        self.toolbar = self.addToolBar('Exit')
+        self.toolbar.addAction(exitAct)
 
-    def plot(self):
-        ''' plot some random stuff '''
-        # random data
-        data = [random.random() for i in range(10)]
+        openFile = QAction(QIcon('open.png'), 'Open', self)
+        openFile.setShortcut('Ctrl+O')
+        openFile.setStatusTip('Open new File')
+        openFile.triggered.connect(self.showDialog)
 
-        # instead of ax.hold(False)
-        self.figure.clear()
+        # self.toolbar = self.addToolBar('Open')
+        self.toolbar.addAction(openFile)
 
-        # create an axis
-        ax = self.figure.add_subplot(111)
-
-        # discards the old graph
-        # ax.hold(False) # deprecated, see above
-
-        # plot data
-        ax.plot(data, '*-')
-
-        # refresh canvas
-        self.canvas.draw()
+    def _update_canvas(self):
+        self._dynamic_ax.clear()
+        t = np.linspace(0, 10, 101)
+        # Shift the sinusoid as a function of time.
+        self._dynamic_ax.plot(t, np.sin(t + time.time()))
+        self._dynamic_ax.figure.canvas.draw()
 
     def closeEvent(self, event):
 
         reply = QMessageBox.question(self, 'Message',
-                                     "Are you sure to quit?", QMessageBox.Yes |
-                                     QMessageBox.No, QMessageBox.No)
+                                     "Are you sure to quit?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
 
         if reply == QMessageBox.Yes:
             event.accept()
         else:
             event.ignore()
 
-    def center(self):
+    def showDialog(self):
 
-        qr = self.frameGeometry()
-        cp = QDesktopWidget().availableGeometry().center()
-        qr.moveCenter(cp)
-        self.move(qr.topLeft())
+        fname = QFileDialog.getOpenFileName(self, 'Open file', '/home')
+        self.statusBar().showMessage(fname[0])
 
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
+        # if fname[0]:
+        #     f = open(fname[0], 'r')
+        #
+        #     with f:
+        #         data = f.read()
+        #         self.textEdit.setText(data)
 
-    main = Window()
-    main.show()
 
-    sys.exit(app.exec_())
+if __name__ == "__main__":
+    qapp = QtWidgets.QApplication(sys.argv)
+    app = ApplicationWindow()
+    app.show()
+    qapp.exec_()
