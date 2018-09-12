@@ -1,11 +1,53 @@
+import sys
+from PyQt5 import QtCore, QtWidgets
+from PyQt5.QtGui import QIcon
+from PyQt5.QtCore import QSize, QRect
+
 from PyQt5.QtWidgets import QApplication, QMainWindow, QMenu, QVBoxLayout, QSizePolicy, QMessageBox, QWidget, \
-    QPushButton
+    QPushButton, QComboBox
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 from matplotlib.backends.qt_compat import QtCore, QtWidgets, is_pyqt5
 import matplotlib.pyplot as plt
 import random
+import numpy as np
+
+
+class SnaptoCursor:
+    """
+    Like Cursor but the crosshair snaps to the nearest x,y point
+    For simplicity, I'm assuming x is sorted
+    """
+
+    def __init__(self, ax, x, y, plotCanvas):
+        self.ax = ax
+        self.plotCanvas = plotCanvas
+
+        self.lx = ax.axhline(color='k')  # the horiz line
+        self.ly = ax.axvline(color='k')  # the vert line
+        self.x = x
+        self.y = y
+        # text location in axes coords
+        self.txt = ax.text(0.7, 0.9, '', transform=ax.transAxes)
+
+    def mouse_move(self, event):
+
+        if not event.inaxes:
+            return
+
+        x, y = event.xdata, event.ydata
+
+        indx = np.searchsorted(self.x, [x])[0]
+        x = self.x[indx]
+        y = self.y[indx]
+        # update the line positions
+        self.lx.set_ydata(y)
+        self.ly.set_xdata(x)
+
+        self.txt.set_text('x=%1.2f, y=%1.2f' % (x, y))
+        print('x=%1.2f, y=%1.2f' % (x, y))
+        self.plotCanvas.draw()
 
 
 class PlotCanvas(FigureCanvasQTAgg):
@@ -17,22 +59,51 @@ class PlotCanvas(FigureCanvasQTAgg):
         self._main = QtWidgets.QWidget()
         parent.setCentralWidget(self._main)
         layout = QtWidgets.QVBoxLayout(self._main)
-        layout.addWidget(NavigationToolbar(self, parent))
+        navigation_toolbar = NavigationToolbar(self, parent)
+
+        self.button = QPushButton('Plot')
+        self.button.setToolTip('This is a <b>QPushButton</b> widget')
+        self.button.clicked.connect(self.plot)
+        navigation_toolbar.addWidget(self.button)
+
+        self.cb = QComboBox()
+        self.cb.setGeometry(QRect(40, 40, 491, 31))
+        self.cb.setObjectName(("comboBox"))
+        self.cb.addItem("PyQt")
+        self.cb.addItem("Qt")
+        self.cb.addItem("Python")
+        self.cb.addItem("Example")
+        self.cb.currentIndexChanged.connect(self.selectionchange)
+
+        navigation_toolbar.addWidget(self.cb)
+
+        layout.addWidget(navigation_toolbar)
         layout.addWidget(self)
 
         FigureCanvasQTAgg.setSizePolicy(self, QSizePolicy.Expanding, QSizePolicy.Expanding)
         FigureCanvasQTAgg.updateGeometry(self)
 
-
-        self.axes = self.figure.subplots() #fig.add_subplot(111)
-
-
+        self.axes = self.figure.subplots()
 
         self.plot()
 
+        self.cursor = SnaptoCursor(self.axes, [i for i in range(25)], self.data, self)
+        self.figure.canvas.mpl_connect('motion_notify_event', self.cursor.mouse_move)
+
+    def selectionchange(self, i):
+        print("Items in the list are :")
+
+        for count in range(self.cb.count()):
+            print(self.cb.itemText(count))
+        print("Current index", i, "selection changed ", self.cb.currentText())
+
     def plot(self):
-        data = [random.random() for i in range(25)]
-        ax = self.figure.add_subplot(111)
-        ax.plot(data, 'r-')
-        ax.set_title('PyQt Matplotlib Example')
+        self.data = [random.random() for i in range(25)]
+
+
+
+        self.axes.plot(self.data, 'r-')
+        self.axes.set_title('PyQt Matplotlib Example')
+
+
         self.draw()
