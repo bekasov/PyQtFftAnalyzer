@@ -24,12 +24,17 @@ class SnaptoCursor:
         self.ax = ax
         self.plotCanvas = plotCanvas
 
-        self.lx = ax.axhline(color='k')  # the horiz line
-        self.ly = ax.axvline(color='k')  # the vert line
+        self.lx = ax.axhline(color='lightGray')  # the horiz line
+        self.ly = ax.axvline(color='lightGray')  # the vert line
         self.x = x
         self.y = y
+
+        self.currentX = x[0]
+        self.currentY = y[0]
+
         # text location in axes coords
-        self.txt = ax.text(0.7, 0.9, '', transform=ax.transAxes)
+        # self.txt = ax.text(0.7, 0.9, '', transform=ax.transAxes)
+
 
     def mouse_move(self, event):
 
@@ -39,15 +44,16 @@ class SnaptoCursor:
         x, y = event.xdata, event.ydata
 
         indx = np.searchsorted(self.x, [x])[0]
-        x = self.x[indx]
-        y = self.y[indx]
+        self.currentX = self.x[indx]
+        self.currentY = self.y[indx]
         # update the line positions
-        self.lx.set_ydata(y)
-        self.ly.set_xdata(x)
 
-        self.txt.set_text('x=%1.2f, y=%1.2f' % (x, y))
-        print('x=%1.2f, y=%1.2f' % (x, y))
         self.plotCanvas.draw()
+        self.lx.set_ydata(self.currentY)
+        self.ly.set_xdata(self.currentX)
+
+        # self.txt.set_text('x=%1.2f, y=%1.2f' % (x, y))
+        # print('x=%1.2f, y=%1.2f' % (x, y))
 
 
 class PlotCanvas(FigureCanvasQTAgg):
@@ -87,23 +93,22 @@ class PlotCanvas(FigureCanvasQTAgg):
 
         self.plot()
 
-        self.cursor = SnaptoCursor(self.axes, [i for i in range(25)], self.data, self)
-        self.figure.canvas.mpl_connect('motion_notify_event', self.cursor.mouse_move)
-
     def selectionchange(self, i):
         print("Items in the list are :")
 
         for count in range(self.cb.count()):
             print(self.cb.itemText(count))
+
         print("Current index", i, "selection changed ", self.cb.currentText())
 
     def plot(self):
         self.data = [random.random() for i in range(25)]
-
-
-
         self.axes.plot(self.data, 'r-')
         self.axes.set_title('PyQt Matplotlib Example')
 
+        self.cursor = SnaptoCursor(self.axes, [i for i in range(25)], self.data, self)
+        self.figure.canvas.mpl_connect('motion_notify_event', self.cursor.mouse_move)
+
+        self.axes.format_coord = lambda x, y: 'x={:01.2f}, y={:01.2f}'.format(self.cursor.currentX, self.cursor.currentY)
 
         self.draw()

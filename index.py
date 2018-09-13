@@ -35,3 +35,7 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     ex = App()
     sys.exit(app.exec_())
+
+    format_coord = lambda x, y: 'x={:01.2f}, y={:01.2f}'.format(x, y)
+
+    print(format_coord(1.3, 3.45))
