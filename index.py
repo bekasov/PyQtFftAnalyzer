@@ -1,34 +1,69 @@
 import sys
 
+from PyQt5.QtCore import QSize, QRect
 from PyQt5.QtWidgets import QApplication, QMainWindow, QMenu, QVBoxLayout, QSizePolicy, QMessageBox, QWidget, \
-    QPushButton
+    QPushButton, QComboBox, QGroupBox
 from PyQt5.QtGui import QIcon
+
+from matplotlib.backends.qt_compat import QtCore, QtWidgets
 
 import PlotCanvas
 
 
 class App(QMainWindow):
     def __init__(self):
-        super().__init__()
-        self.left = 30
-        self.top = 60
-        self.title = 'Анализ спектров потребления транспортных линий'
-        self.width = 640
-        self.height = 400
-        self.initUI()
+        super(App, self).__init__()
 
-    def initUI(self):
-        self.setWindowTitle(self.title)
-        self.setGeometry(self.left, self.top, self.width, self.height)
+        self.init_ui()
 
-        m = PlotCanvas.PlotCanvas(width=5, height=4, parent=self)
-
-        # button = QPushButton('PyQt5 button', self)
-        # button.setToolTip('This s an example button')
-        # button.move(500, 0)
-        # button.resize(140, 100)
-
+        self.plots = []
         self.show()
+
+    def init_ui(self):
+        left = 30; top = 60; width = 640; height = 400
+
+        self.setWindowTitle('Анализ спектров потребления транспортных линий')
+        self.setGeometry(left, top, width, height)
+
+        self.create_toolbar()
+        self.create_main_layout()
+
+    def create_toolbar(self):
+        self.mainToolbar = self.addToolBar('MainToolbar')
+
+        self.curveCombobox = QComboBox()
+        self.curveCombobox.setGeometry(QRect(40, 40, 491, 31))
+        self.curveCombobox.setObjectName("CurveCombobox")
+        self.curveCombobox.addItem("PyQt")
+        self.curveCombobox.addItem("Qt")
+        self.curveCombobox.addItem("Python")
+        self.curveCombobox.addItem("Example")
+        self.curveCombobox.currentIndexChanged.connect(self.curve_combobox_selection_change)
+        self.mainToolbar.addWidget(self.curveCombobox)
+
+        self.addPlotButton = QPushButton('AddPlotButton')
+        self.addPlotButton.setToolTip('Добавить <b>выбранный</b> график для анализа')
+        self.addPlotButton.clicked.connect(self.add_plot_button_clicked)
+        self.mainToolbar.addWidget(self.addPlotButton)
+
+    def create_main_layout(self):
+        self._main = QtWidgets.QWidget()
+        self.setCentralWidget(self._main)
+        self.main_layout = QtWidgets.QVBoxLayout(self._main)
+        self.setLayout(self.main_layout)
+
+    def add_plot_button_clicked(self):
+        new_plot = PlotCanvas.Plot(width=5, height=4, parent=self, layout=self.main_layout)
+        self.plots.append(new_plot)
+        self.main_layout.addWidget(new_plot)
+
+    def curve_combobox_selection_change(self, i):
+        print("Items in the list are :")
+
+        for count in range(self.curveCombobox.count()):
+            print(self.curveCombobox.itemText(count))
+
+        print("Current index", i, "selection changed ", self.curveCombobox.currentText())
 
 
 if __name__ == '__main__':
@@ -36,6 +71,21 @@ if __name__ == '__main__':
     ex = App()
     sys.exit(app.exec_())
 
-    format_coord = lambda x, y: 'x={:01.2f}, y={:01.2f}'.format(x, y)
-
-    print(format_coord(1.3, 3.45))
+    # import pyodbc
+    #
+    # MDB = './data/Мощность.xls'
+    # DRV = '{Microsoft Access Driver (*.mdb)}'
+    # PWD = ''
+    #
+    # print('DRIVER={};DBQ={}'.format(DRV, MDB))
+    #
+    # con = pyodbc.connect('DRIVER={};DBQ={}'.format(DRV, MDB))
+    # cur = con.cursor()
+    #
+    # tables = list(cur.tables())
+    #
+    # print
+    # 'tables'
+    # for b in tables:
+    #     print
+    #     b
