@@ -67,25 +67,31 @@ class App(QMainWindow):
 
 
 if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    ex = App()
-    sys.exit(app.exec_())
+    # app = QApplication(sys.argv)
+    # ex = App()
+    # sys.exit(app.exec_())
 
-    # import pyodbc
-    #
-    # MDB = './data/Мощность.xls'
-    # DRV = '{Microsoft Access Driver (*.mdb)}'
-    # PWD = ''
-    #
-    # print('DRIVER={};DBQ={}'.format(DRV, MDB))
-    #
-    # con = pyodbc.connect('DRIVER={};DBQ={}'.format(DRV, MDB))
-    # cur = con.cursor()
-    #
-    # tables = list(cur.tables())
-    #
-    # print
-    # 'tables'
-    # for b in tables:
-    #     print
-    #     b
+    import pyodbc
+
+    MDB = './data/db_обнуленная.mdb'
+    DRV = [x for x in pyodbc.drivers() if x.startswith('Microsoft Access Driver')][0] #'{Microsoft Access Driver (*.mdb)}'
+    PWD = ''
+
+    connect_string = 'DRIVER={};DBQ={}'.format(DRV, MDB)
+    print(connect_string)
+
+    con = pyodbc.connect(connect_string)
+    cur = con.cursor()
+
+    tables = list(cur.tables())
+    for b in tables: print (b[2])
+
+    cur = con.cursor()
+
+    # run a query and get the results
+    SQL = 'SELECT MAX(ДатаИВремя) FROM Мощность;'  # your query goes here
+    rows = cur.execute(SQL).fetchall()
+    cur.close()
+    con.close()
+
+    print(rows)
