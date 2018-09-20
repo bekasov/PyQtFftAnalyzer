@@ -13,9 +13,13 @@ import matplotlib.pyplot as plt
 import random
 import numpy as np
 
+import ViewModel
+
 
 class Plot(FigureCanvasQTAgg):
-    def __init__(self, width, height, parent, layout, dpi=100):
+    def __init__(self, view_model: ViewModel, width, height, parent, layout, dpi=100):
+        self.view_model = view_model
+
         fig = Figure(figsize=(width, height), dpi=dpi)
         FigureCanvasQTAgg.__init__(self, fig)
         self.setParent(parent)
