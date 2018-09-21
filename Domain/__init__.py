@@ -1,6 +1,7 @@
-from enum import Enum
+from enum import IntEnum
 
-class Transporter(Enum):
+
+class Transporter(IntEnum):
     K408A = 0
     K408B = 1
     K409A = 2
