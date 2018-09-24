@@ -1,5 +1,6 @@
 import sys
 import datetime
+import io
 
 from PyQt5.QtCore import QSize, QRect, QDate, QDateTime
 from PyQt5.QtWidgets import QApplication, QMainWindow, QMenu, QVBoxLayout, QSizePolicy, QMessageBox, QWidget, \

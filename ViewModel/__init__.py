@@ -3,6 +3,13 @@ import Domain, typing, datetime
 
 
 class PlotViewModel:
+    service: DataService
+    line: Domain.Transporter
+    date_from: datetime
+    date_to: datetime
+
+    title: str
+
     fft: FftResult
 
     def __init__(self, service: DataService, line: Domain.Transporter, date_from: datetime, date_to: datetime):
@@ -11,7 +18,7 @@ class PlotViewModel:
         self.date_from = date_from
         self.date_to = date_to
 
-        self.title = self.line._name_
+        self.title = self.line._name_ + " (" + date_from.strftime("%Y-%m-%d %H:%M:%S") + " - " + date_to.strftime("%Y-%m-%d %H:%M:%S") + ")"
 
         self.fft = FftResult(np.array([]), np.array([]))
 
@@ -40,8 +47,8 @@ class AppViewModel:
         self.date_to = current_date
 
         if dev_mode:
-            self.date_from = datetime.datetime(2018, 2, 25, 15, 52, 27)
-            self.date_to = datetime.datetime(2018, 2, 24, 15, 52, 27)
+            self.date_from = datetime.datetime(2018, 2, 24, 15, 52, 27)
+            self.date_to = datetime.datetime(2018, 2, 25, 15, 52, 27)
 
     def get_line_names(self) -> List[typing.Tuple[str, Domain.Transporter]]:
         return [(key, Domain.Transporter.__members__.get(key)) for key in Domain.Transporter.__members__.keys()]
@@ -50,7 +57,10 @@ class AppViewModel:
         self.current_line = value
 
     def set_current_dates_from_to(self, value: datetime, date_to: bool = False):
-        self.date_from = value
+        if(date_to):
+            self.date_to = value
+        else:
+            self.date_from = value
 
     def create_plot_view_model(self):
         return PlotViewModel(self.service, self.current_line, self.date_from, self.date_to)

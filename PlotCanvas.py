@@ -27,13 +27,17 @@ class Plot(FigureCanvasQTAgg):
         layout.addWidget(navigation_toolbar)
         self.axes = self.figure.subplots()
 
+        self.axes.set_title(self.view_model.title)
+
         self.view_model.load_data()
 
         self.dataY = self.view_model.fft.magnitudes
         self.dataX = self.view_model.fft.frequencies
 
+        if (len(self.dataX) == 0 or len(self.dataY) == 0):
+            return
+
         self.axes.plot(self.dataX, self.dataY, 'r-')
-        self.axes.set_title(self.view_model.title)
 
         self.cursor = SnapToCursor(self.axes, self.dataX, self.dataY, self)
         self.figure.canvas.mpl_connect('motion_notify_event', self.cursor.mouse_move)
