@@ -20,7 +20,7 @@ class Plot(FigureCanvasQTAgg):
     def __init__(self, view_model: PlotViewModel, width, height, parent, layout, dpi=100):
         self.view_model = view_model
 
-        fig = Figure(figsize=(width, height), dpi=dpi)
+        fig = Figure(figsize=(width, height), dpi=dpi, tight_layout=True)
         FigureCanvasQTAgg.__init__(self, fig)
         self.setParent(parent)
         navigation_toolbar = NavigationToolbar(self, parent)
@@ -40,7 +40,7 @@ class Plot(FigureCanvasQTAgg):
         self.axes.format_coord = lambda x, y: self.view_model.format_current_point_info(self.cursor.currentX, self.cursor.currentY)
 
         self.draw()
-        self.figure.tight_layout()
+
 
 
 class SnapToCursor:

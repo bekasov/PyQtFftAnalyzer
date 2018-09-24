@@ -19,7 +19,7 @@ class App(QMainWindow):
         super(App, self).__init__()
         db_file_full_path =  './Resources/data/db_обнуленная.mdb' if len(argv) < 2 else argv[1]
         ms_access_repo = MsAccessRepository(MsAccessRepository.create_connect_string(db_file_full_path))
-        self.view_model = AppViewModel(DataService(ms_access_repo))
+        self.view_model = AppViewModel(DataService(ms_access_repo), dev_mode=len(argv) < 2)
 
         self._init_ui()
 

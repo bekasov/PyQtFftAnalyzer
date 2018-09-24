@@ -24,7 +24,7 @@ class PlotViewModel:
 
 
 class AppViewModel:
-    def __init__(self, service: DataService):
+    def __init__(self, service: DataService, dev_mode: bool):
         self.service = service
 
         self.title = 'Анализ спектров потребления транспортных линий'
@@ -39,8 +39,9 @@ class AppViewModel:
         self.date_from = current_date.date() + datetime.timedelta(days=-1)
         self.date_to = current_date
 
-        # self.date_from = datetime.datetime(2018, 2, 25, 15, 52, 27)
-        # self.date_to = datetime.datetime(2018, 2, 24, 15, 52, 27)
+        if dev_mode:
+            self.date_from = datetime.datetime(2018, 2, 25, 15, 52, 27)
+            self.date_to = datetime.datetime(2018, 2, 24, 15, 52, 27)
 
     def get_line_names(self) -> List[typing.Tuple[str, Domain.Transporter]]:
         return [(key, Domain.Transporter.__members__.get(key)) for key in Domain.Transporter.__members__.keys()]
