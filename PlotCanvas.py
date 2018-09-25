@@ -26,11 +26,11 @@ class Plot(FigureCanvasQTAgg):
         self.navigation_toolbar = NavigationToolbar(self, self)
         layout.addWidget(self.navigation_toolbar)
 
-        close_button = QAction(QIcon(self.view_model.close_button_icon_path), self.view_model.close_button_text, self)
+        close_button = QPushButton(self.view_model.close_button_text) #QAction(QIcon(self.view_model.close_button_icon_path), self.view_model.close_button_text, self)
         # close_button.setShortcut('Ctrl+Shift+Q')
         #close_button.setStatusTip()
-        close_button.triggered.connect(self._close_button_click)
-        self.navigation_toolbar.addAction(close_button)
+        close_button.clicked.connect(self._close_button_click)
+        self.navigation_toolbar.addWidget(close_button)
 
         self.axes = self.figure.subplots()
         self.axes.set_title(self.view_model.title)
