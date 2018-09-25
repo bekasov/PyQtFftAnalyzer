@@ -4,7 +4,7 @@ from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import QSize, QRect
 
 from PyQt5.QtWidgets import QApplication, QMainWindow, QMenu, QVBoxLayout, QSizePolicy, QMessageBox, QWidget, \
-    QPushButton, QComboBox
+    QPushButton, QComboBox, QAction
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
@@ -23,10 +23,16 @@ class Plot(FigureCanvasQTAgg):
         fig = Figure(figsize=(width, height), dpi=dpi, tight_layout=True)
         FigureCanvasQTAgg.__init__(self, fig)
         self.setParent(parent)
-        navigation_toolbar = NavigationToolbar(self, parent)
-        layout.addWidget(navigation_toolbar)
-        self.axes = self.figure.subplots()
+        self.navigation_toolbar = NavigationToolbar(self, self)
+        layout.addWidget(self.navigation_toolbar)
 
+        close_button = QAction(QIcon(self.view_model.close_button_icon_path), self.view_model.close_button_text, self)
+        # close_button.setShortcut('Ctrl+Shift+Q')
+        #close_button.setStatusTip()
+        close_button.triggered.connect(self._close_button_click)
+        self.navigation_toolbar.addAction(close_button)
+
+        self.axes = self.figure.subplots()
         self.axes.set_title(self.view_model.title)
 
         self.view_model.load_data()
@@ -45,7 +51,9 @@ class Plot(FigureCanvasQTAgg):
 
         self.draw()
 
-
+    def _close_button_click(self):
+        self.setParent(None)
+        self.navigation_toolbar.setParent(None)
 
 class SnapToCursor:
     def __init__(self, ax, x, y, plotCanvas):
@@ -70,8 +78,9 @@ class SnapToCursor:
         x, y = event.xdata, event.ydata
 
         current_point_index = np.searchsorted(self.x, [x])[0]
-        self.currentX = self.x[current_point_index]
-        self.currentY = self.y[current_point_index]
+
+        self.currentX = self.x[current_point_index] if current_point_index < len(self.x) else self.x[len(self.x) - 1]
+        self.currentY = self.y[current_point_index] if current_point_index < len(self.y) else self.y[len(self.y) - 1]
 
         self.plotCanvas.draw()
         self.lx.set_ydata(self.currentY)

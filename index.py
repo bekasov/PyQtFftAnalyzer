@@ -75,11 +75,11 @@ class App(QMainWindow):
         self._main = QtWidgets.QWidget()
         self.setCentralWidget(self._main)
         self.main_layout = QtWidgets.QVBoxLayout(self._main)
-        self.setLayout(self.main_layout)
+        #self.setLayout(self.main_layout)
 
     def _add_plot_button_clicked(self):
         new_plot = PlotCanvas.Plot(self.view_model.create_plot_view_model(), width=5, height=4, parent=self, layout=self.main_layout)
-        self.plots.append(new_plot)
+        #self.plots.append(new_plot)
         self.main_layout.addWidget(new_plot)
 
     def _curve_combobox_selection_change(self, i):

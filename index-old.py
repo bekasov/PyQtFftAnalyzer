@@ -43,7 +43,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
         self.statusBar().showMessage('Ready')
 
-        exitAct = QAction(QIcon('Exit.png'), '&Exit', self)
+        exitAct = QAction(QIcon('Resources/images/Exit.png'), '&Exit', self)
         exitAct.setShortcut('Ctrl+Q')
         exitAct.setStatusTip('Exit application')
         exitAct.triggered.connect(qapp.quit)

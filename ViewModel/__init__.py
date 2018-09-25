@@ -9,6 +9,8 @@ class PlotViewModel:
     date_to: datetime
 
     title: str
+    close_button_text: str
+    close_button_icon_path: str
 
     fft: FftResult
 
@@ -19,6 +21,8 @@ class PlotViewModel:
         self.date_to = date_to
 
         self.title = self.line._name_ + " (" + date_from.strftime("%Y-%m-%d %H:%M:%S") + " - " + date_to.strftime("%Y-%m-%d %H:%M:%S") + ")"
+        self.close_button_text = 'Закрыть график'
+        self.close_button_icon_path = 'Resources/images/Close.png'
 
         self.fft = FftResult(np.array([]), np.array([]))
 
