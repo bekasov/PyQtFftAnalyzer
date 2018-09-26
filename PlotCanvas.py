@@ -4,7 +4,7 @@ from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import QSize, QRect
 
 from PyQt5.QtWidgets import QApplication, QMainWindow, QMenu, QVBoxLayout, QSizePolicy, QMessageBox, QWidget, \
-    QPushButton, QComboBox, QAction
+    QPushButton, QComboBox, QAction, QSpinBox, QLabel
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
@@ -26,6 +26,13 @@ class Plot(FigureCanvasQTAgg):
         self.navigation_toolbar = NavigationToolbar(self, self)
         layout.addWidget(self.navigation_toolbar)
 
+        filter_spin_label = QLabel(self.view_model.filter_spin_label_text, self)
+        self.navigation_toolbar.addWidget(filter_spin_label)
+
+        filter_spin = QSpinBox(self)
+        filter_spin.valueChanged.connect(self._filter_spin_value_changed)
+        self.navigation_toolbar.addWidget(filter_spin)
+
         close_button = QPushButton(self.view_model.close_button_text) #QAction(QIcon(self.view_model.close_button_icon_path), self.view_model.close_button_text, self)
         # close_button.setShortcut('Ctrl+Shift+Q')
         #close_button.setStatusTip()
@@ -37,23 +44,39 @@ class Plot(FigureCanvasQTAgg):
 
         self.view_model.load_data()
 
-        self.dataY = self.view_model.fft.magnitudes
-        self.dataX = self.view_model.fft.frequencies
+        self._show_plot()
 
-        if (len(self.dataX) == 0 or len(self.dataY) == 0):
-            return
-
-        self.axes.plot(self.dataX, self.dataY, 'r-')
-
-        self.cursor = SnapToCursor(self.axes, self.dataX, self.dataY, self)
-        self.figure.canvas.mpl_connect('motion_notify_event', self.cursor.mouse_move)
         self.axes.format_coord = lambda x, y: self.view_model.format_current_point_info(self.cursor.currentX, self.cursor.currentY)
 
         self.draw()
 
+    def _show_plot(self):
+        result = self.view_model.get_result()
+        self.dataY = result.magnitudes
+        self.dataX = result.frequencies
+
+        if len(self.dataX) == 0 or len(self.dataY) == 0:
+            return
+
+        self.axes.clear()
+
+        self.axes.plot(self.dataX, self.dataY, drawstyle='steps-mid', zorder=1, lw=1, color='#d4d4d4') # 'r-' 'bo'
+        self.axes.scatter(self.dataX, self.dataY, s=5, zorder=2)
+        #self.axes.magnitude_spectrum(self.dataY, self.dataX[0])
+
+        self.axes.grid(color='#ececec')
+
+        self.cursor = SnapToCursor(self.axes, self.dataX, self.dataY, self)
+        self.figure.canvas.mpl_connect('motion_notify_event', self.cursor.mouse_move)
+
+    def _filter_spin_value_changed(self, new_value: int):
+        self.view_model.set_filter(abs(new_value))
+        self._show_plot()
+
     def _close_button_click(self):
         self.setParent(None)
         self.navigation_toolbar.setParent(None)
+
 
 class SnapToCursor:
     def __init__(self, ax, x, y, plotCanvas):
