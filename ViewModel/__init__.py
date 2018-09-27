@@ -39,10 +39,15 @@ class PlotViewModel:
             return self._fft
 
     def set_filter(self, filter_count: int):
-        if self._filter_count != filter_count and filter_count > 0:
-            self._filter_count = filter_count
+        if self._filter_count == filter_count:
+            return
+
+        self._filter_count = filter_count
+
+        if self._filter_count > 0:
             filtered_magnitudes, filtered_indices = self.service.find_maximums_rec(self._fft.magnitudes, self._filter_count)
             self._fft_filtered = FftResult(magnitudes=filtered_magnitudes, frequencies=self._fft.frequencies[filtered_indices])
+
 
     @staticmethod
     def format_current_point_info(frequency: float, y: float):

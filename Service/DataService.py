@@ -34,7 +34,7 @@ class DataService:
 
         return FftResult(fftFreqs, fftMagnitudes)
 
-    def find_maximums(self, data, min_delta_range_percent: float =0.1):
+    def find_maximums(self, data, min_delta_range_percent: float = 0.1):
         real_min_delta = 0
         if min_delta_range_percent != 0:
             data_range = np.max(data) - np.min(data)
@@ -61,7 +61,7 @@ class DataService:
                         max_ind = (i - (zero_sign_count // 2)) if zero_sign_count > 2 else (i - 1)
 
                     if i == 1:
-                        max_ind = i - 1;
+                        max_ind = i - 1
 
                     if max_ind > -1:
                         result_values.append(data[max_ind])
@@ -76,11 +76,11 @@ class DataService:
         [detector(i, v) for i, v in enumerate(data)]
         return result_values, result_indices
 
-    def find_maximums_rec(self, data, rec_num=2, min_delta_range_percent=0, previous_inds=[]):
+    def find_maximums_rec(self, data, rec_num=2, min_delta_range_percent=0, previous_indices=[]):
         max_magnitudes, max_magnitudes_ind = self.find_maximums(data, min_delta_range_percent)
 
-        if len(previous_inds) > 0:
-            max_magnitudes_ind = [previous_inds[i] for i in max_magnitudes_ind]
+        if len(previous_indices) > 0:
+            max_magnitudes_ind = [previous_indices[i] for i in max_magnitudes_ind]
 
         rec_num = rec_num - 1
 

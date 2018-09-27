@@ -7,7 +7,8 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QMenu, QVBoxLayout, QSize
     QPushButton, QComboBox, QAction, QSpinBox, QLabel
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
-from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
+from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT
+from matplotlib.cbook import Stack
 from matplotlib.backends.qt_compat import QtCore, QtWidgets, is_pyqt5
 import matplotlib.pyplot as plt
 import random
@@ -23,7 +24,7 @@ class Plot(FigureCanvasQTAgg):
         fig = Figure(figsize=(width, height), dpi=dpi, tight_layout=True)
         FigureCanvasQTAgg.__init__(self, fig)
         self.setParent(parent)
-        self.navigation_toolbar = NavigationToolbar(self, self)
+        self.navigation_toolbar = NavigationToolbar2QT(self, self)
         layout.addWidget(self.navigation_toolbar)
 
         filter_spin_label = QLabel(self.view_model.filter_spin_label_text, self)
@@ -40,15 +41,13 @@ class Plot(FigureCanvasQTAgg):
         self.navigation_toolbar.addWidget(close_button)
 
         self.axes = self.figure.subplots()
-        self.axes.set_title(self.view_model.title)
-
+        self.axes.format_coord = lambda x, y: ""
         self.view_model.load_data()
 
         self._show_plot()
 
-        self.axes.format_coord = lambda x, y: self.view_model.format_current_point_info(self.cursor.currentX, self.cursor.currentY)
-
-        self.draw()
+        #FigureCanvasQTAgg.setSizePolicy(self, QSizePolicy.Expanding, QSizePolicy.Expanding)
+        #FigureCanvasQTAgg.updateGeometry(self)
 
     def _show_plot(self):
         result = self.view_model.get_result()
@@ -65,23 +64,35 @@ class Plot(FigureCanvasQTAgg):
         #self.axes.magnitude_spectrum(self.dataY, self.dataX[0])
 
         self.axes.grid(color='#ececec')
+        #self.axes.set_title(self.view_model.title)
+        self.axes.text(0, 1, self.view_model.title, transform=self.axes.transAxes)
 
-        self.cursor = SnapToCursor(self.axes, self.dataX, self.dataY, self)
+        format_coord_lambda = lambda x, y: self.view_model.format_current_point_info(self.cursor.currentX, self.cursor.currentY)
+
+        self.cursor = SnapToCursor(self.axes, self.dataX, self.dataY, self, format_coord_lambda)
+
         self.figure.canvas.mpl_connect('motion_notify_event', self.cursor.mouse_move)
+        self.figure.canvas.mpl_connect('scroll_event', self._scroll_event)
+
+        self.draw()
 
     def _filter_spin_value_changed(self, new_value: int):
         self.view_model.set_filter(abs(new_value))
         self._show_plot()
+        self.navigation_toolbar.forward()
 
     def _close_button_click(self):
         self.setParent(None)
         self.navigation_toolbar.setParent(None)
 
+    def _scroll_event(self, event):
+        print(event)
+
 
 class SnapToCursor:
-    def __init__(self, ax, x, y, plotCanvas):
+    def __init__(self, ax, x, y, plot_canvas, format_coord_lambda):
         self.ax = ax
-        self.plotCanvas = plotCanvas
+        self.plot_canvas = plot_canvas
 
         self.lx = ax.axhline(color='lightGray')  # the horiz line
         self.ly = ax.axvline(color='lightGray')  # the vert line
@@ -91,8 +102,10 @@ class SnapToCursor:
         self.currentX = x[0]
         self.currentY = y[0]
 
+        self.format_coord_lambda = format_coord_lambda
+
         # text location in axes coords
-        # self.txt = ax.text(0.7, 0.9, '', transform=ax.transAxes)
+        self.txt = ax.text(0.5, 0.99, '', fontsize=8, horizontalalignment='center', verticalalignment='top', transform=ax.transAxes)
 
     def mouse_move(self, event):
         if not event.inaxes:
@@ -105,50 +118,8 @@ class SnapToCursor:
         self.currentX = self.x[current_point_index] if current_point_index < len(self.x) else self.x[len(self.x) - 1]
         self.currentY = self.y[current_point_index] if current_point_index < len(self.y) else self.y[len(self.y) - 1]
 
-        self.plotCanvas.draw()
+        self.plot_canvas.draw()
         self.lx.set_ydata(self.currentY)
         self.ly.set_xdata(self.currentX)
 
-        # self.txt.set_text('x=%1.2f, y=%1.2f' % (x, y))
-        # print('x=%1.2f, y=%1.2f' % (x, y))
-
-
-# class PlotCanvas(FigureCanvasQTAgg):
-#     def __init__(self, width, height, parent=None, dpi=100):
-#         fig = Figure(figsize=(width, height), dpi=dpi)
-#         FigureCanvasQTAgg.__init__(self, fig)
-#         self.setParent(parent)
-#
-#         self._main = QtWidgets.QWidget()
-#         parent.setCentralWidget(self._main)
-#         layout = QtWidgets.QVBoxLayout(self._main)
-#         navigation_toolbar = NavigationToolbar(self, parent)
-#
-#         self.button = QPushButton('Plot')
-#         self.button.setToolTip('This is a <b>QPushButton</b> widget')
-#         self.button.clicked.connect(self.plot)
-#         navigation_toolbar.addWidget(self.button)
-#
-#         # navigation_toolbar.addWidget(self.cb)
-#
-#         layout.addWidget(navigation_toolbar)
-#         layout.addWidget(self)
-#
-#         FigureCanvasQTAgg.setSizePolicy(self, QSizePolicy.Expanding, QSizePolicy.Expanding)
-#         FigureCanvasQTAgg.updateGeometry(self)
-#
-#         self.axes = self.figure.subplots()
-#
-#         self.plot()
-#
-#     def plot(self):
-#         self.data = [random.random() for i in range(25)]
-#         self.axes.plot(self.data, 'r-')
-#         self.axes.set_title('PyQt Matplotlib Example')
-#
-#         self.cursor = SnapToCursor(self.axes, [i for i in range(25)], self.data, self)
-#         self.figure.canvas.mpl_connect('motion_notify_event', self.cursor.mouse_move)
-#
-#         self.axes.format_coord = lambda x, y: 'x={:01.2f}, y={:01.2f}'.format(self.cursor.currentX, self.cursor.currentY)
-#
-#         self.draw()
+        self.txt.set_text(self.format_coord_lambda(x, y))
