@@ -16,6 +16,7 @@ import numpy as np
 
 from ViewModel import PlotViewModel
 
+import Controls
 
 class Plot(FigureCanvasQTAgg):
     def __init__(self, view_model: PlotViewModel, width, height, parent, layout, dpi=100):
@@ -39,6 +40,8 @@ class Plot(FigureCanvasQTAgg):
         #close_button.setStatusTip()
         close_button.clicked.connect(self._close_button_click)
         self.navigation_toolbar.addWidget(close_button)
+
+        subtract_comobobox = Controls.Che
 
         self.axes = self.figure.subplots()
         self.axes.format_coord = lambda x, y: ""

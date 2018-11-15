@@ -8,7 +8,7 @@ class PlotViewModel:
     date_from: datetime
     date_to: datetime
 
-    close_button_text: str = 'Закрыть график'
+    close_button_text: str = 'Удалить график'
     close_button_icon_path: str = 'Resources/images/Close.png'
     filter_spin_label_text: str = 'Глубина фильтрации:'
 
